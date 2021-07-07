@@ -8,7 +8,7 @@ const restify = require("restify");
 // See https://aka.ms/bot-services to learn more about the different parts of a bot.
 const { BotFrameworkAdapter, UserState, MemoryStorage } = require("botbuilder");
 
-const { TeamsBot } = require("./bots/teamsBot.js");
+const { TeamsBot } = require("./teamsBot.js");
 
 // Create bot adapter.
 // See https://aka.ms/about-bot-adapter to learn more about bot adapter.
@@ -34,7 +34,9 @@ adapter.onTurnError = async (context, error) => {
   );
 
   // Send a message to the user
-  await context.sendActivity(`The bot encountered an error or bug: \n ${error.message}`);
+  await context.sendActivity(
+    `The bot encountered an error or bug: \n ${error.message}`
+  );
   await context.sendActivity(
     "To continue to run this bot, please fix the bot source code."
   );
@@ -50,7 +52,8 @@ const memoryStorage = new MemoryStorage();
 const userState = new UserState(memoryStorage);
 
 // Create the main dialog.
-const bot = new TeamsBot(userState);
+const conversationReferences = {};
+const bot = new TeamsBot(conversationReferences);
 
 // Create HTTP server
 const server = restify.createServer();
@@ -64,4 +67,35 @@ server.post("/api/messages", (req, res) => {
     // route to main dialog.
     await bot.run(context);
   });
+});
+
+server.post("/api/gitIssuesUpdated", async (req, res) => {  
+  let body = "";
+  let issueDto = {};
+  req.on("readable", () => {
+    let paragraph = req.read();
+    if (paragraph) {
+      body += paragraph;
+    }
+  });
+  req.on("end", async () => {
+    console.log(body);
+    issueDto = JSON.parse(body);
+
+    for (const conversationReference of Object.values(conversationReferences)) {
+      await adapter.continueConversation(
+        conversationReference,
+        async (turnContext) => {
+          issueDto = {
+            $root: issueDto
+          }
+          await bot.sendIssueUpdateCard(turnContext, issueDto);
+        }
+      );
+    }
+
+    res.write("OK");
+    res.end();
+  });
+  
 });

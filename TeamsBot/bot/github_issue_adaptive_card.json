@@ -1,0 +1,84 @@
+{
+    "type": "AdaptiveCard",
+    "body": [
+        {
+            "type": "TextBlock",
+            "size": "Large",
+            "weight": "Bolder",
+            "text": "Github Repo [${repository.name}] Issues update"
+        },
+        {
+            "type": "ColumnSet",
+            "columns": [
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "Image",
+                            "style": "Person",
+                            "url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+                            "size": "Small"
+                        }
+                    ],
+                    "width": "auto"
+                },
+                {
+                    "type": "Column",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "weight": "Bolder",
+                            "text": "Issue Title: ${issue.title}",
+                            "wrap": true,
+                            "height": "stretch",
+                            "fontType": "Default",
+                            "size": "Medium"
+                        },
+                        {
+                            "type": "TextBlock",
+                            "weight": "Bolder",
+                            "text": "Update Action: ${action}",
+                            "wrap": true,
+                            "spacing": "Small"
+                        },
+                        {
+                            "type": "TextBlock",
+                            "weight": "Bolder",
+                            "text": "Issue Author: ${issue.user.login}",
+                            "wrap": true,
+                            "spacing": "Small"
+                        },
+                        {
+                            "type": "TextBlock",
+                            "spacing": "None",
+                            "text": "Update time: {{TIME(${issue.created_at})}} {{DATE(${issue.created_at})}}",
+                            "isSubtle": true,
+                            "wrap": true
+                        }
+                    ],
+                    "width": "stretch"
+                }
+            ]
+        },
+        {
+            "type": "TextBlock",
+            "size": "Medium",
+            "weight": "Bolder",
+            "text": "Issue Description"
+        },
+        {
+            "type": "TextBlock",
+            "text": "${issue.body}",
+            "wrap": true
+        }
+    ],
+    "actions": [
+        {
+            "type": "Action.OpenUrl",
+            "title": "View details on Web",
+            "url": "${issue.html_url}"
+        }
+    ],
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "version": "1.3"
+}
