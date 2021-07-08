@@ -6,8 +6,7 @@ const restify = require("restify");
 
 // Import required bot services.
 // See https://aka.ms/bot-services to learn more about the different parts of a bot.
-const { BotFrameworkAdapter, UserState, MemoryStorage } = require("botbuilder");
-
+const { BotFrameworkAdapter} = require("botbuilder");
 const { TeamsBot } = require("./teamsBot.js");
 
 // Create bot adapter.
@@ -41,15 +40,6 @@ adapter.onTurnError = async (context, error) => {
     "To continue to run this bot, please fix the bot source code."
   );
 };
-
-// Define a state store for your bot. See https://aka.ms/about-bot-state to learn more about using MemoryStorage.
-// A bot requires a state store to persist the dialog and user state between messages.
-
-// For local development, in-memory storage is used.
-// CAUTION: The Memory Storage used here is for local bot debugging only. When the bot
-// is restarted, anything stored in memory will be gone.
-const memoryStorage = new MemoryStorage();
-const userState = new UserState(memoryStorage);
 
 // Create the main dialog.
 const conversationReferences = {};

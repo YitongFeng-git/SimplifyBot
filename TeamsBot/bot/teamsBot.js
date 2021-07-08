@@ -10,7 +10,6 @@ const {
   ActivityFactory,
 } = require("botbuilder");
 const ACData = require("adaptivecards-templating");
-const AdaptiveCards = require("adaptivecards");
 const issueACTempJobj = require("./github_issue_adaptive_card.json");
 class TeamsBot extends TeamsActivityHandler {
   constructor(conversationReferences) {
@@ -28,6 +27,7 @@ class TeamsBot extends TeamsActivityHandler {
 
     //Sends welcome messages to conversation members when they join the conversation.
     this.onMembersAdded(async (context, next) => {
+      addConversationReference(context.activity);
       await Promise.all((context.activity.membersAdded || []).map(async (member) => {
         // Since the bot is the recipient for events from the channel,
         // context.activity.membersAdded !== context.activity.recipient.Id indicates it is not a bot but a user.
@@ -93,6 +93,7 @@ class TeamsBot extends TeamsActivityHandler {
     const evalContext = ACData.IEvaluationContext = issueDto;
     const adaptiveCard = issueACTemplate.expand(evalContext);
     const adaptiveCardAttach = CardFactory.adaptiveCard(adaptiveCard);
+    console.log(JSON.stringify(adaptiveCard));
     await context.sendActivity({ attachments: [adaptiveCardAttach] });
   }
 }
