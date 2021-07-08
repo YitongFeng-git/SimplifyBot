@@ -1,2 +1,6 @@
+fx-resource-aad-app-for-teams.local_clientSecret=
+fx-resource-local-debug.localAuthEndpoint=
 fx-resource-local-debug.skipNgrok=false
 fx-resource-local-debug.localBotEndpoint=
+fx-resource-local-debug.localBotDomain=
+fx-resource-bot.localBotPassword=

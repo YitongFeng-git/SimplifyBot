@@ -3,28 +3,20 @@ const { App, ExpressReceiver } = require("@slack/bolt");
 const ACData = require("adaptivecards-templating");
 const issueBlockTempJobj = require("./github_issue_slack_block.json");
 
+const channelName = "test-slack-apps";
 const receiver = new ExpressReceiver({
-  signingSecret: process.env.SLACK_SIGNING_SECRET,
+  signingSecret: process.env.SLACK_SIGNING_SECRET
 });
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
-  receiver,
-});
-
-// All the room in the world for your code
-
-app.event("team_join", async ({ event, client }) => {
-  try {
-    const result = await client.chat.postMessage({
-      channel: "",
-      text: `Welcome to the team, ${event.user.id}!`,
-    });
-  } catch (error) {
-    console.error(error);
-  }
+  receiver
 });
 
 
+app.event("member_joined_channel", async ({ event, say }) => {
+  console.log(JSON.stringify(event));
+  await say(`Welcome to the team, ${event.user.id}!`);
+});
 
 // Other web requests are methods on receiver.router
 receiver.router.post("/api/gitIssuesUpdated", (req, res) => {
@@ -37,7 +29,6 @@ receiver.router.post("/api/gitIssuesUpdated", (req, res) => {
     }
   });
   req.on("end", async () => {
-    console.log(body);
     issueDto = JSON.parse(body);
     sendIssueUpdateCard(issueDto);
 
@@ -53,9 +44,46 @@ receiver.router.post("/api/gitIssuesUpdated", (req, res) => {
   console.log("⚡️ Bolt app is running!");
 })();
 
-async function  sendIssueUpdateCard(issueDto) {
-  const issueACTemplate = new ACData.Template(issueBlockTempJobj);
-  const evalContext = ACData.IEvaluationContext = issueDto;
-  const slackBlock = issueACTemplate.expand(evalContext);
-  await say(slackBlock);
+// Find conversation ID using the conversations.list method
+async function findConversation(name) {
+  try {
+    // Call the conversations.list method using the built-in WebClient
+    const result = await app.client.conversations.list({
+      // The token you used to initialize your app
+      token: process.env.SLACK_BOT_TOKEN
+    });
+
+    for (const channel of result.channels) {
+      if (channel.name === name) {
+        // Print result
+        console.log("Found conversation ID: " + channel.id);
+        return channel.id;
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function sendIssueUpdateCard(issueDto) {
+  try {
+    issueDto = {
+      $root: issueDto
+    };
+    const issueACTemplate = new ACData.Template(issueBlockTempJobj);
+    const evalContext = (ACData.IEvaluationContext = issueDto);
+    const slackBlock = issueACTemplate.expand(evalContext);
+    console.log(JSON.stringify(slackBlock.blocks));
+    const conversationId = await findConversation(channelName);
+    const result = await app.client.chat.postMessage({
+      // The token you used to initialize your app
+      token: process.env.SLACK_BOT_TOKEN,
+      channel: conversationId,
+      blocks: slackBlock.blocks
+    });
+    // Print result, which includes information about the message (like TS)
+    console.log(result);
+  } catch (error) {
+    console.error(error);
+  }
 }

@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "adaptivecards": "^2.9.0",
+    "adaptivecards-templating": "^2.1.0"
+  }
+}
