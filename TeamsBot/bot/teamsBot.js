@@ -20,20 +20,17 @@ class TeamsBot extends TeamsActivityHandler {
 
     this.onMessage(async (context, next) => {
       this.addConversationReference(context.activity);
-      // By calling next() you ensure that the next BotHandler is run.
       await context.sendActivity(`You sent "${context.activity.text}"`);
       await next();
     });
 
     //Sends welcome messages to conversation members when they join the conversation.
     this.onMembersAdded(async (context, next) => {
-      addConversationReference(context.activity);
+      this.addConversationReference(context.activity);
       await Promise.all((context.activity.membersAdded || []).map(async (member) => {
         // Since the bot is the recipient for events from the channel,
         // context.activity.membersAdded !== context.activity.recipient.Id indicates it is not a bot but a user.
         if (member.id !== context.activity.recipient.id) {
-          // const conversationAccount = context.activity.conversation;
-          // const member = conversationAccount.getConversationMembers(conversationAccount.id)
           await context.sendActivity(`welcome to the Bot!`)
         }
       }));
@@ -41,37 +38,11 @@ class TeamsBot extends TeamsActivityHandler {
       await next();
     });
 
-    // this.onMembersAddedActivity(async (context, next) => {
-    //   await Promise.all(
-    //     (context.activity.membersAdded || []).map(async (member) => {
-    //       if (member.id !== context.activity.recipient.id) {
-    //         await context.sendActivity(
-    //           `Welcome to the team ${member.givenName} ${member.surname}`
-    //         );
-    //       }
-    //     })
-    //   );
-    //   await next();
-    // });
-
     this.onConversationUpdate(async (context, next) => {
       this.addConversationReference(context.activity);
 
       await next();
     });
-
-    // this.onTeamsMembersAdded(async (context, next) => {
-    //   await Promise.all(
-    //     (context.activity.membersAdded || []).map(async (member) => {
-    //       if (member.id !== context.activity.recipient.id) {
-    //         await context.sendActivity(
-    //           `Welcome to the team ${member.givenName} ${member.surname}`
-    //         );
-    //       }
-    //     })
-    //   );
-    //   await next();
-    // });
   }
 
   /**

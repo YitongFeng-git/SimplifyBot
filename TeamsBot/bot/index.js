@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-// Import required packages
 const restify = require("restify");
 
 // Import required bot services.
@@ -20,24 +19,11 @@ const adapter = new BotFrameworkAdapter({
 adapter.onTurnError = async (context, error) => {
   // This check writes out errors to console log .vs. app insights.
   // NOTE: In production environment, you should consider logging this to Azure
-  //       application insights. See https://aka.ms/bottelemetry for telemetry
-  //       configuration instructions.
+  // application insights. See https://aka.ms/bottelemetry for telemetry configuration instructions.
   console.error(`\n [onTurnError] unhandled error: ${error}`);
 
-  // Send a trace activity, which will be displayed in Bot Framework Emulator
-  await context.sendTraceActivity(
-    "OnTurnError Trace",
-    `${error}`,
-    "https://www.botframework.com/schemas/error",
-    "TurnError"
-  );
-
-  // Send a message to the user
   await context.sendActivity(
-    `The bot encountered an error or bug: \n ${error.message}`
-  );
-  await context.sendActivity(
-    "To continue to run this bot, please fix the bot source code."
+    `The bot encountered an error or bug: \n ${error.message} \n To continue to run this bot, please fix the bot source code.`
   );
 };
 
@@ -61,7 +47,6 @@ server.post("/api/messages", (req, res) => {
 
 server.post("/api/gitIssuesUpdated", async (req, res) => {  
   let body = "";
-  let issueDto = {};
   req.on("readable", () => {
     let paragraph = req.read();
     if (paragraph) {
@@ -70,20 +55,17 @@ server.post("/api/gitIssuesUpdated", async (req, res) => {
   });
   req.on("end", async () => {
     console.log(body);
-    issueDto = JSON.parse(body);
+    let issueDto = JSON.parse(body);
 
     for (const conversationReference of Object.values(conversationReferences)) {
       await adapter.continueConversation(
         conversationReference,
         async (turnContext) => {
-          issueDto = {
-            $root: issueDto
-          }
+          issueDto = { $root: issueDto }
           await bot.sendIssueUpdateCard(turnContext, issueDto);
         }
       );
     }
-
     res.write("OK");
     res.end();
   });
