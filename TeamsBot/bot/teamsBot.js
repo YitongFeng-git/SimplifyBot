@@ -61,7 +61,7 @@ class TeamsBot extends TeamsActivityHandler {
 
   async sendIssueUpdateCard(context, issueDto) {
     const issueACTemplate = new ACData.Template(issueACTempJobj);
-    const evalContext = ACData.IEvaluationContext = issueDto;
+    const evalContext = issueDto;
     const adaptiveCard = issueACTemplate.expand(evalContext);
     const adaptiveCardAttach = CardFactory.adaptiveCard(adaptiveCard);
     console.log(JSON.stringify(adaptiveCard));
