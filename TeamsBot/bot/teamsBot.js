@@ -3,46 +3,43 @@
 
 // Import required Bot Framework classes.
 const {
-  ActionTypes,
   TeamsActivityHandler,
   CardFactory,
-  TurnContext,
-  ActivityFactory,
 } = require("botbuilder");
 const ACData = require("adaptivecards-templating");
 const issueACTempJobj = require("./github_issue_adaptive_card.json");
 class TeamsBot extends TeamsActivityHandler {
-  constructor(conversationReferences) {
+  constructor() {
     super();
 
-    // Dependency injected dictionary for storing ConversationReference objects used in NotifyController to proactively message users
-    this.conversationReferences = conversationReferences;
+    // record team channel id
+    this.teamsChannelId = "19:120548056a05417bb46f567fec78cf14@thread.tacv2";
+    this.serviceUrl = "https://smba.trafficmanager.net/apac/";
 
     this.onMessage(async (context, next) => {
-      this.addConversationReference(context.activity);
+      this.serviceUrl = context.activity.serviceUrl;
       await context.sendActivity(`You sent "${context.activity.text}"`);
       await next();
     });
 
     //Sends welcome messages to conversation members when they join the conversation.
     this.onMembersAdded(async (context, next) => {
-      this.addConversationReference(context.activity);
-      await Promise.all((context.activity.membersAdded || []).map(async (member) => {
-        // Since the bot is the recipient for events from the channel,
-        // context.activity.membersAdded !== context.activity.recipient.Id indicates it is not a bot but a user.
-        if (member.id !== context.activity.recipient.id) {
-          await context.sendActivity(`welcome to the Bot!`)
-        }
-      }));
+      this.teamsChannelId = "19%3a120548056a05417bb46f567fec78cf14%40thread.tacv2";
+      this.serviceUrl = context.activity.serviceUrl;
+
+      await Promise.all(
+        (context.activity.membersAdded || []).map(async (member) => {
+          // Since the bot is the recipient for events from the channel,
+          // context.activity.membersAdded !== context.activity.recipient.Id indicates it is not a bot but a user.
+          if (member.id !== context.activity.recipient.id) {
+            await context.sendActivity(`welcome to the Bot!`);
+          }
+        })
+      );
       // By calling next() you ensure that the next BotHandler is run.
       await next();
     });
 
-    this.onConversationUpdate(async (context, next) => {
-      this.addConversationReference(context.activity);
-
-      await next();
-    });
   }
 
   /**
@@ -52,20 +49,38 @@ class TeamsBot extends TeamsActivityHandler {
     await super.run(context);
   }
 
-  addConversationReference(activity) {
-    const conversationReference =
-      TurnContext.getConversationReference(activity);
-    this.conversationReferences[conversationReference.conversation.id] =
-      conversationReference;
+  async teamsCreateConversation(activityToSend, teamsChannelId, adapter) {
+    if (!teamsChannelId) {
+      throw new Error("Error! No teams channel id!");
+    }
+    if (!this.serviceUrl) {
+      throw new Error("Error! No service url!");
+    }
+    const conversationParameters = {
+      isGroup: true,
+      channelData: {
+        channel: {
+          id: teamsChannelId,
+        },
+      },
+
+      activity: activityToSend,
+    };
+    const connectorClient = adapter.createConnectorClient(this.serviceUrl);
+    const conversationResourceResponse =
+      await connectorClient.conversations.createConversation(
+        conversationParameters
+      );
   }
 
-  async sendIssueUpdateCard(context, issueDto) {
+  async sendIssueUpdateCard(adapter, issueDto) {
     const issueACTemplate = new ACData.Template(issueACTempJobj);
     const adaptiveCard = issueACTemplate.expand(issueDto);
     const adaptiveCardAttach = CardFactory.adaptiveCard(adaptiveCard);
     console.log(JSON.stringify(adaptiveCard));
-    await context.sendActivity({ attachments: [adaptiveCardAttach] });
+    await this.teamsCreateConversation({attachments: [adaptiveCardAttach], type: "message"}, this.teamsChannelId, adapter)
   }
+
 }
 
 module.exports.TeamsBot = TeamsBot;

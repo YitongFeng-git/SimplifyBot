@@ -28,8 +28,7 @@ adapter.onTurnError = async (context, error) => {
 };
 
 // Create the main dialog.
-const conversationReferences = {};
-const bot = new TeamsBot(conversationReferences);
+const bot = new TeamsBot();
 
 // Create HTTP server
 const server = restify.createServer();
@@ -54,24 +53,13 @@ server.post("/api/gitIssuesUpdated", async (req, res) => {
     }
   });
   req.on("end", async () => {
-    console.log(body);
-    if (!Object.values(conversationReferences).length) {
-      res.send(404, `ERROR! No conversationReferences, please say 'hi' to the bot.`);
-    } else {
-      let issueDto = JSON.parse(body);
-
-      for (const conversationReference of Object.values(
-        conversationReferences
-      )) {
-        await adapter.continueConversation(
-          conversationReference,
-          async (turnContext) => {
-            issueDto = { $root: issueDto };
-            await bot.sendIssueUpdateCard(turnContext, issueDto);
-          }
-        );
-      }
-      res.send(200, "OK");
+    let issueDto = JSON.parse(body);
+    issueDto = { $root: issueDto };
+    try {
+      bot.sendIssueUpdateCard(adapter, issueDto);
+    } catch (err) {
+      res.send(503, err.message);
     }
+    res.send(200, "OK");
   });
 });
